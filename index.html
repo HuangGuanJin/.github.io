@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏幕控制 - 旋转与常亮</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .status-card {
+            transition: all 0.3s ease;
+        }
+        
+        .status-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .rotate-animation {
+            animation: rotate 0.5s ease-in-out;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 模拟模式样式 */
+        .simulation-active {
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .simulation-landscape {
+            transform: rotate(90deg);
+            transform-origin: center center;
+        }
+        
+        .simulation-portrait {
+            transform: rotate(0deg);
+        }
+        
+        /* 模拟模式指示器 */
+        .simulation-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 50;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 标题区域 -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                <i class="fas fa-mobile-alt mr-4"></i>
+                屏幕控制中心
+            </h1>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                轻松控制屏幕方向和常亮状态，提升您的浏览体验
+            </p>
+        </div>
+
+        <!-- 状态显示区域 -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- 屏幕方向状态 -->
+            <div class="glass-effect rounded-2xl p-6 status-card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-white">屏幕方向</h3>
+                    <i id="orientationIcon" class="fas fa-mobile-alt text-2xl text-blue-400"></i>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">当前方向:</span>
+                        <span id="currentOrientation" class="text-white font-medium">检测中...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">角度:</span>
+                        <span id="orientationAngle" class="text-white font-medium">--°</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">支持锁定:</span>
+                        <span id="lockSupport" class="text-white font-medium">检测中...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 屏幕常亮状态 -->
+            <div class="glass-effect rounded-2xl p-6 status-card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-white">屏幕常亮</h3>
+                    <i id="wakeLockIcon" class="fas fa-lightbulb text-2xl text-yellow-400"></i>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">常亮状态:</span>
+                        <span id="wakeLockStatus" class="text-white font-medium">未激活</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">支持状态:</span>
+                        <span id="wakeLockSupport" class="text-white font-medium">检测中...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">激活时间:</span>
+                        <span id="wakeLockDuration" class="text-white font-medium">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制按钮区域 -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- 屏幕方向控制 -->
+            <div class="glass-effect rounded-2xl p-6">
+                <h3 class="text-xl font-semibold text-white mb-6 text-center">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    方向控制
+                </h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <button id="portraitBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-mobile-alt mr-2"></i>
+                        竖屏
+                    </button>
+                    <button id="landscapeBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-mobile-alt fa-rotate-90 mr-2"></i>
+                        横屏
+                    </button>
+                    <button id="unlockOrientationBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg col-span-2">
+                        <i class="fas fa-unlock mr-2"></i>
+                        解锁方向
+                    </button>
+                </div>
+                <!-- 模拟模式切换 -->
+                <div class="border-t border-gray-600 pt-4">
+                    <button id="simulationToggle" class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 w-full text-sm">
+                        <i class="fas fa-theater-masks mr-2"></i>
+                        切换模拟模式
+                    </button>
+                    <p class="text-gray-400 text-xs mt-2 text-center">桌面环境下可启用模拟模式体验功能</p>
+                </div>
+            </div>
+
+            <!-- 屏幕常亮控制 -->
+            <div class="glass-effect rounded-2xl p-6">
+                <h3 class="text-xl font-semibold text-white mb-6 text-center">
+                    <i class="fas fa-sun mr-2"></i>
+                    常亮控制
+                </h3>
+                <div class="space-y-4">
+                    <button id="enableWakeLockBtn" class="btn-success text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 hover:shadow-lg w-full">
+                        <i class="fas fa-power-off mr-2"></i>
+                        开启常亮
+                    </button>
+                    <button id="disableWakeLockBtn" class="btn-danger text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 hover:shadow-lg w-full">
+                        <i class="fas fa-moon mr-2"></i>
+                        关闭常亮
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日志区域 -->
+        <div class="glass-effect rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-white">
+                    <i class="fas fa-list mr-2"></i>
+                    操作日志
+                </h3>
+                <button id="clearLogBtn" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-trash mr-1"></i>
+                    清空
+                </button>
+            </div>
+            <div id="logContainer" class="bg-black bg-opacity-30 rounded-xl p-4 h-48 overflow-y-auto font-mono text-sm">
+                <div class="text-green-400">[系统] 屏幕控制中心已启动</div>
+            </div>
+        </div>
+
+        <!-- 兼容性提示 -->
+        <div id="compatibilityWarning" class="mt-6 glass-effect rounded-2xl p-4 border-l-4 border-yellow-400 hidden">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-yellow-400 mr-3"></i>
+                <div>
+                    <h4 class="text-white font-medium">兼容性提示</h4>
+                    <p class="text-gray-300 text-sm mt-1">部分功能可能在当前浏览器中不受支持，建议使用最新版本的Chrome或Edge浏览器。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
