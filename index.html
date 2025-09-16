@@ -433,11 +433,65 @@
 
         <!-- 兼容性提示 -->
         <div id="compatibilityWarning" class="mt-6 glass-effect rounded-2xl p-4 border-l-4 border-yellow-400 hidden">
-            <div class="flex items-center">
+            <div class="flex items-center mb-4">
                 <i class="fas fa-exclamation-triangle text-yellow-400 mr-3"></i>
                 <div>
                     <h4 class="text-white font-medium">兼容性提示</h4>
-                    <p class="text-gray-300 text-sm mt-1">部分功能可能在当前浏览器中不受支持，建议使用最新版本的Chrome或Edge浏览器。</p>
+                    <p class="text-gray-300 text-sm mt-1">部分功能可能在当前浏览器中不受支持，请查看下方详细说明。</p>
+                </div>
+            </div>
+            
+            <!-- 浏览器兼容性详情 -->
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+                <div class="bg-green-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-green-400">
+                    <h5 class="text-green-300 font-medium mb-2">✅ 完全支持</h5>
+                    <ul class="text-sm text-gray-300 space-y-1">
+                        <li>• Chrome (Android/iOS)</li>
+                        <li>• Edge (Android)</li>
+                        <li>• Samsung Internet</li>
+                        <li>• 系统默认浏览器 (Android)</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-yellow-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-yellow-400">
+                    <h5 class="text-yellow-300 font-medium mb-2">⚠️ 部分支持</h5>
+                    <ul class="text-sm text-gray-300 space-y-1">
+                        <li>• Safari (iOS) - 需要用户手势</li>
+                        <li>• Firefox Mobile - 功能有限</li>
+                        <li>• 小米浏览器 - 需要权限</li>
+                        <li>• 华为浏览器 - 需要权限</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-red-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-red-400">
+                    <h5 class="text-red-300 font-medium mb-2">❌ 支持受限</h5>
+                    <ul class="text-sm text-gray-300 space-y-1">
+                        <li>• 夸克浏览器 - 功能被限制</li>
+                        <li>• UC浏览器 - 不支持</li>
+                        <li>• QQ浏览器 - 不支持</li>
+                        <li>• 微信内置浏览器 - 不支持</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-blue-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-blue-400">
+                    <h5 class="text-blue-300 font-medium mb-2">🔧 解决方案</h5>
+                    <ul class="text-sm text-gray-300 space-y-1">
+                        <li>• 使用Chrome或Edge浏览器</li>
+                        <li>• 确保HTTPS环境</li>
+                        <li>• 允许浏览器全屏权限</li>
+                        <li>• 在用户交互后调用API</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 全屏模式说明 -->
+            <div class="mt-4 bg-purple-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-purple-400">
+                <h5 class="text-purple-300 font-medium mb-2">🔄 为什么需要全屏模式？</h5>
+                <div class="text-sm text-gray-300 space-y-1">
+                    <p><strong>安全考虑：</strong>防止恶意网站随意改变用户设备方向，影响用户体验</p>
+                    <p><strong>系统保护：</strong>避免方向锁定影响系统UI、通知栏等系统级界面</p>
+                    <p><strong>规范要求：</strong>W3C标准建议在全屏上下文中使用屏幕方向锁定API</p>
+                    <p><strong>权限提升：</strong>全屏模式类似于获得更高级别的API访问权限</p>
                 </div>
             </div>
         </div>

@@ -56,15 +56,47 @@ class ScreenController {
     checkMobileBrowserSupport() {
         const userAgent = navigator.userAgent.toLowerCase();
         
-        if (userAgent.includes('chrome')) {
-            this.log('✅ Chrome浏览器，方向锁定支持良好', 'success');
+        // 检测具体浏览器类型
+        if (userAgent.includes('quark')) {
+            this.log('⚠️ 夸克浏览器检测到，方向锁定功能可能受限', 'warning');
+            this.log('💡 夸克浏览器建议：尝试在设置中开启"允许网页全屏"权限', 'info');
+            this.log('💡 或者尝试使用Chrome、Edge等浏览器进行测试', 'info');
+        } else if (userAgent.includes('ucbrowser') || userAgent.includes('ucweb')) {
+            this.log('⚠️ UC浏览器检测到，方向锁定支持有限', 'warning');
+            this.log('💡 建议使用Chrome或系统默认浏览器', 'info');
+        } else if (userAgent.includes('miuibrowser')) {
+            this.log('⚠️ 小米浏览器检测到，方向锁定支持一般', 'warning');
+        } else if (userAgent.includes('huaweibrowser')) {
+            this.log('⚠️ 华为浏览器检测到，方向锁定支持一般', 'warning');
+        } else if (userAgent.includes('samsungbrowser')) {
+            this.log('✅ 三星浏览器检测到，方向锁定支持较好', 'success');
+        } else if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
+            this.log('✅ Chrome浏览器，方向锁定支持最佳', 'success');
+        } else if (userAgent.includes('edg')) {
+            this.log('✅ Edge浏览器，方向锁定支持良好', 'success');
         } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
             this.log('⚠️ Safari浏览器，方向锁定支持有限', 'warning');
+            this.log('💡 Safari需要用户手势且可能需要全屏模式', 'info');
         } else if (userAgent.includes('firefox')) {
             this.log('⚠️ Firefox浏览器，方向锁定支持有限', 'warning');
+        } else if (userAgent.includes('opera')) {
+            this.log('⚠️ Opera浏览器，方向锁定支持一般', 'warning');
         } else {
             this.log('❓ 未知浏览器，方向锁定支持情况不明', 'warning');
+            this.log('💡 建议使用Chrome、Edge或系统默认浏览器', 'info');
         }
+        
+        // 显示浏览器兼容性排行
+        this.showBrowserCompatibilityRanking();
+    }
+    
+    // 显示浏览器兼容性排行
+    showBrowserCompatibilityRanking() {
+        this.log('📊 移动端浏览器兼容性排行（方向锁定API）：', 'info');
+        this.log('🥇 最佳：Chrome、Edge、Samsung Browser', 'success');
+        this.log('🥈 良好：系统默认浏览器（Android WebView）', 'info');
+        this.log('🥉 一般：Safari、Firefox、小米浏览器、华为浏览器', 'warning');
+        this.log('❌ 受限：夸克浏览器、UC浏览器、QQ浏览器', 'error');
     }
 
     // 检查浏览器兼容性
@@ -276,21 +308,28 @@ class ScreenController {
         try {
             this.log(`尝试锁定屏幕方向: ${orientation}`);
             
-            // 移动设备优先尝试全屏模式
+            // 解释为什么需要全屏模式
             if (!document.fullscreenElement) {
-                this.log('尝试进入全屏模式以支持方向锁定...', 'info');
+                this.log('📖 为什么需要全屏模式？', 'info');
+                this.log('1. 浏览器安全策略：防止恶意网站随意改变设备方向', 'info');
+                this.log('2. 用户体验保护：避免影响系统UI和其他应用', 'info');
+                this.log('3. W3C规范要求：方向锁定API需要在全屏上下文中使用', 'info');
+                this.log('正在尝试进入全屏模式...', 'info');
+                
                 try {
-                    await this.requestFullscreen();
+                    await this.requestFullscreenWithMultipleMethods();
                     // 等待全屏模式稳定
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    this.log('✅ 全屏模式已激活，现在可以锁定方向', 'success');
                 } catch (fullscreenError) {
-                    this.log('全屏模式请求失败，尝试直接锁定方向', 'warning');
+                    this.log('⚠️ 全屏模式请求失败，尝试直接锁定方向', 'warning');
+                    this.log('💡 某些浏览器可能不需要全屏模式', 'info');
                 }
             }
             
             // 尝试锁定屏幕方向
             await screen.orientation.lock(orientation);
-            this.log(`屏幕方向已锁定: ${orientation}`, 'success');
+            this.log(`🎯 屏幕方向已成功锁定: ${orientation}`, 'success');
             this.addRotateAnimation();
             
         } catch (error) {
@@ -392,26 +431,91 @@ class ScreenController {
         }
     }
 
-    // 请求全屏模式
-    async requestFullscreen() {
+    // 请求全屏模式（多种方法尝试）
+    async requestFullscreenWithMultipleMethods() {
         const element = document.documentElement;
-        try {
-            if (element.requestFullscreen) {
-                await element.requestFullscreen();
-            } else if (element.webkitRequestFullscreen) {
-                await element.webkitRequestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                await element.mozRequestFullScreen();
-            } else if (element.msRequestFullscreen) {
-                await element.msRequestFullscreen();
-            } else {
-                throw new Error('Fullscreen API not supported');
+        const methods = [
+            { name: 'requestFullscreen', method: element.requestFullscreen },
+            { name: 'webkitRequestFullscreen', method: element.webkitRequestFullscreen },
+            { name: 'mozRequestFullScreen', method: element.mozRequestFullScreen },
+            { name: 'msRequestFullscreen', method: element.msRequestFullscreen }
+        ];
+        
+        for (const { name, method } of methods) {
+            if (method) {
+                try {
+                    this.log(`尝试使用 ${name} 进入全屏...`, 'info');
+                    await method.call(element);
+                    this.log('✅ 全屏模式激活成功', 'success');
+                    return;
+                } catch (error) {
+                    this.log(`${name} 失败: ${error.message}`, 'warning');
+                    continue;
+                }
             }
-            this.log('已进入全屏模式', 'success');
-        } catch (error) {
-            this.log(`全屏模式请求失败: ${error.message}`, 'warning');
-            throw error;
         }
+        
+        // 如果所有方法都失败，尝试特殊处理
+        await this.tryAlternativeFullscreenMethods();
+    }
+    
+    // 尝试替代全屏方法
+    async tryAlternativeFullscreenMethods() {
+        this.log('尝试替代全屏方法...', 'info');
+        
+        // 方法1：尝试视频元素全屏（某些浏览器支持）
+        try {
+            const video = document.createElement('video');
+            video.style.position = 'fixed';
+            video.style.top = '0';
+            video.style.left = '0';
+            video.style.width = '100%';
+            video.style.height = '100%';
+            video.style.zIndex = '-1';
+            video.style.opacity = '0';
+            document.body.appendChild(video);
+            
+            if (video.requestFullscreen) {
+                await video.requestFullscreen();
+                this.log('✅ 通过视频元素进入全屏模式', 'success');
+                return;
+            }
+        } catch (error) {
+            this.log('视频元素全屏方法失败', 'warning');
+        }
+        
+        // 方法2：模拟全屏效果
+        this.log('应用模拟全屏效果...', 'info');
+        this.applyPseudoFullscreen();
+        
+        throw new Error('所有全屏方法均失败');
+    }
+    
+    // 应用伪全屏效果
+    applyPseudoFullscreen() {
+        const style = document.createElement('style');
+        style.id = 'pseudoFullscreen';
+        style.textContent = `
+            body.pseudo-fullscreen {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                z-index: 9999 !important;
+                background: #000 !important;
+            }
+        `;
+        document.head.appendChild(style);
+        document.body.classList.add('pseudo-fullscreen');
+        this.log('⚠️ 应用伪全屏模式（可能无法完全替代真实全屏）', 'warning');
+    }
+    
+    // 请求全屏模式（保持原有方法兼容性）
+    async requestFullscreen() {
+        return this.requestFullscreenWithMultipleMethods();
     }
 
     // 重试方向锁定
@@ -473,17 +577,47 @@ class ScreenController {
 
     // 显示方向锁定建议
     showOrientationLockAdvice() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        
         if (this.isDesktopEnvironment()) {
-            this.log('🔧 解决方案建议:', 'info');
+            this.log('🔧 桌面环境解决方案:', 'info');
             this.log('1. 使用移动设备或平板电脑进行测试', 'info');
             this.log('2. 在Chrome DevTools中启用设备模拟模式', 'info');
             this.log('3. 尝试进入全屏模式后再锁定方向', 'info');
         } else {
             this.log('🔧 移动设备解决方案:', 'info');
-            this.log('1. 确保使用HTTPS或localhost', 'info');
-            this.log('2. 确保在用户交互后调用API', 'info');
-            this.log('3. 尝试进入全屏模式', 'info');
+            
+            // 针对夸克浏览器的特殊建议
+            if (userAgent.includes('quark')) {
+                this.log('📱 夸克浏览器专项解决方案:', 'warning');
+                this.log('1. 打开夸克浏览器设置 → 网页浏览 → 允许网页全屏', 'info');
+                this.log('2. 尝试在夸克浏览器中手动进入全屏模式', 'info');
+                this.log('3. 考虑使用Chrome、Edge等标准浏览器', 'info');
+                this.log('4. 检查夸克浏览器版本，更新到最新版本', 'info');
+            } else if (userAgent.includes('ucbrowser') || userAgent.includes('ucweb')) {
+                this.log('📱 UC浏览器解决方案:', 'warning');
+                this.log('1. UC浏览器对此API支持很有限，建议更换浏览器', 'info');
+                this.log('2. 推荐使用Chrome、Edge或系统默认浏览器', 'info');
+            } else {
+                this.log('1. 确保使用HTTPS或localhost环境', 'info');
+                this.log('2. 确保在用户交互后立即调用API', 'info');
+                this.log('3. 尝试进入全屏模式', 'info');
+                this.log('4. 检查浏览器权限设置', 'info');
+            }
+            
+            this.log('🏆 推荐浏览器排行:', 'success');
+            this.log('1. Chrome (最佳兼容性)', 'success');
+            this.log('2. Edge (良好兼容性)', 'success');
+            this.log('3. Samsung Internet (良好兼容性)', 'success');
+            this.log('4. 系统默认浏览器 (一般兼容性)', 'info');
         }
+        
+        // 通用建议
+        this.log('💡 通用最佳实践:', 'info');
+        this.log('• 在用户点击按钮后立即调用API（保持用户激活状态）', 'info');
+        this.log('• 优先尝试进入全屏模式', 'info');
+        this.log('• 使用HTTPS协议或localhost环境', 'info');
+        this.log('• 确保浏览器版本为最新版本', 'info');
     }
 
     // 处理屏幕方向解锁
