@@ -208,13 +208,21 @@ class ScreenController {
     // 绑定事件监听器
     bindEvents() {
         // 屏幕方向控制按钮 - 使用立即执行确保用户激活状态
-        document.getElementById('portraitBtn').addEventListener('click', (event) => {
+        document.getElementById('portraitPrimaryBtn').addEventListener('click', (event) => {
             event.preventDefault();
             this.handleOrientationLockWithUserGesture('portrait-primary');
         });
-        document.getElementById('landscapeBtn').addEventListener('click', (event) => {
+        document.getElementById('portraitSecondaryBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleOrientationLockWithUserGesture('portrait-secondary');
+        });
+        document.getElementById('landscapePrimaryBtn').addEventListener('click', (event) => {
             event.preventDefault();
             this.handleOrientationLockWithUserGesture('landscape-primary');
+        });
+        document.getElementById('landscapeSecondaryBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleOrientationLockWithUserGesture('landscape-secondary');
         });
         document.getElementById('unlockOrientationBtn').addEventListener('click', (event) => {
             event.preventDefault();
@@ -774,8 +782,10 @@ ScreenController.prototype.simulateOrientationLock = function(orientation) {
     this.simulatedLocked = true;
     
     const orientationMap = {
-        'portrait-primary': '竖屏',
-        'landscape-primary': '横屏'
+        'portrait-primary': '主竖屏',
+        'portrait-secondary': '倒置竖屏',
+        'landscape-primary': '主横屏',
+        'landscape-secondary': '倒置横屏'
     };
     
     this.log(`🎭 模拟锁定屏幕方向: ${orientationMap[orientation]}`, 'success');
@@ -802,13 +812,17 @@ ScreenController.prototype.updateSimulatedOrientationStatus = function() {
     const orientationIcon = document.getElementById('orientationIcon');
     
     const orientationMap = {
-        'portrait-primary': '竖屏 (模拟)',
-        'landscape-primary': '横屏 (模拟)'
+        'portrait-primary': '主竖屏 (模拟)',
+        'portrait-secondary': '倒置竖屏 (模拟)',
+        'landscape-primary': '主横屏 (模拟)',
+        'landscape-secondary': '倒置横屏 (模拟)'
     };
     
     const angleMap = {
         'portrait-primary': 0,
-        'landscape-primary': 90
+        'portrait-secondary': 180,
+        'landscape-primary': 90,
+        'landscape-secondary': 270
     };
     
     if (currentOrientationElement) {
@@ -820,9 +834,19 @@ ScreenController.prototype.updateSimulatedOrientationStatus = function() {
     }
     
     if (orientationIcon) {
-        orientationIcon.className = this.simulatedOrientation.includes('landscape') 
-            ? 'fas fa-mobile-alt fa-rotate-90 text-2xl text-blue-400'
-            : 'fas fa-mobile-alt text-2xl text-blue-400';
+        // 根据不同方向设置不同的图标样式
+        let iconClass = 'fas fa-mobile-alt text-2xl text-blue-400';
+        if (this.simulatedOrientation === 'portrait-secondary') {
+            iconClass = 'fas fa-mobile-alt fa-rotate-180 text-2xl text-blue-400';
+        } else if (this.simulatedOrientation === 'landscape-primary') {
+            iconClass = 'fas fa-mobile-alt fa-rotate-90 text-2xl text-blue-400';
+        } else if (this.simulatedOrientation === 'landscape-secondary') {
+            iconClass = 'fas fa-mobile-alt text-2xl text-blue-400';
+            orientationIcon.style.transform = 'rotate(270deg)';
+        } else {
+            orientationIcon.style.transform = '';
+        }
+        orientationIcon.className = iconClass;
     }
 };
 
@@ -838,29 +862,48 @@ ScreenController.prototype.applySimulationVisualEffect = function(orientation) {
             .simulation-active {
                 transition: transform 0.5s ease-in-out;
             }
-            .simulation-landscape {
+            .simulation-portrait-primary {
+                transform: rotate(0deg);
+                transform-origin: center center;
+            }
+            .simulation-portrait-secondary {
+                transform: rotate(180deg);
+                transform-origin: center center;
+            }
+            .simulation-landscape-primary {
                 transform: rotate(90deg);
                 transform-origin: center center;
             }
-            .simulation-portrait {
-                transform: rotate(0deg);
+            .simulation-landscape-secondary {
+                transform: rotate(270deg);
+                transform-origin: center center;
             }
         `;
         document.head.appendChild(style);
     }
     
-    // 应用模拟变换
-    body.classList.remove('simulation-landscape', 'simulation-portrait');
-    if (orientation.includes('landscape')) {
-        body.classList.add('simulation-landscape');
-    } else {
-        body.classList.add('simulation-portrait');
-    }
+    // 移除所有方向类
+    body.classList.remove(
+        'simulation-portrait-primary', 
+        'simulation-portrait-secondary',
+        'simulation-landscape-primary', 
+        'simulation-landscape-secondary'
+    );
+    
+    // 应用对应的方向类
+    const orientationClass = `simulation-${orientation}`;
+    body.classList.add(orientationClass);
 };
 
 ScreenController.prototype.removeSimulationVisualEffect = function() {
     const body = document.body;
-    body.classList.remove('simulation-active', 'simulation-landscape', 'simulation-portrait');
+    body.classList.remove(
+        'simulation-active', 
+        'simulation-portrait-primary', 
+        'simulation-portrait-secondary',
+        'simulation-landscape-primary', 
+        'simulation-landscape-secondary'
+    );
 };
 
 // 重写handleOrientationLock方法以支持模拟模式

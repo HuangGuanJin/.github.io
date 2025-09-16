@@ -161,14 +161,22 @@
                     <i class="fas fa-sync-alt mr-2"></i>
                     方向控制
                 </h3>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <button id="portraitBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg">
-                        <i class="fas fa-mobile-alt mr-2"></i>
-                        竖屏
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button id="portraitPrimaryBtn" class="btn-primary text-white py-3 px-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg text-sm">
+                        <i class="fas fa-mobile-alt mr-1"></i>
+                        主竖屏
                     </button>
-                    <button id="landscapeBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg">
-                        <i class="fas fa-mobile-alt fa-rotate-90 mr-2"></i>
-                        横屏
+                    <button id="portraitSecondaryBtn" class="btn-primary text-white py-3 px-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg text-sm">
+                        <i class="fas fa-mobile-alt fa-rotate-180 mr-1"></i>
+                        倒置竖屏
+                    </button>
+                    <button id="landscapePrimaryBtn" class="btn-primary text-white py-3 px-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg text-sm">
+                        <i class="fas fa-mobile-alt fa-rotate-90 mr-1"></i>
+                        主横屏
+                    </button>
+                    <button id="landscapeSecondaryBtn" class="btn-primary text-white py-3 px-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg text-sm">
+                        <i class="fas fa-mobile-alt mr-1" style="transform: rotate(270deg);"></i>
+                        倒置横屏
                     </button>
                     <button id="unlockOrientationBtn" class="btn-primary text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 hover:shadow-lg col-span-2">
                         <i class="fas fa-unlock mr-2"></i>
@@ -218,6 +226,208 @@
             </div>
             <div id="logContainer" class="bg-black bg-opacity-30 rounded-xl p-4 h-48 overflow-y-auto font-mono text-sm">
                 <div class="text-green-400">[系统] 屏幕控制中心已启动</div>
+            </div>
+        </div>
+
+        <!-- API 用法说明区域 -->
+        <div class="mt-8 grid md:grid-cols-2 gap-6">
+            <!-- Screen Orientation API 用法 -->
+            <div class="glass-effect rounded-2xl p-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-code text-2xl text-purple-400 mr-3"></i>
+                    <h3 class="text-xl font-semibold text-white">Screen Orientation API</h3>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-lg font-medium text-blue-300 mb-2">🔒 锁定屏幕方向</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div class="text-gray-400 mb-1">// 锁定为竖屏</div>
+                            <div>await screen.orientation.lock('portrait-primary');</div>
+                            <div class="text-gray-400 mt-2 mb-1">// 锁定为横屏</div>
+                            <div>await screen.orientation.lock('landscape-primary');</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-blue-300 mb-2">🔓 解锁屏幕方向</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400">
+                            <div>screen.orientation.unlock();</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-blue-300 mb-2">📱 获取当前方向</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div class="text-gray-400 mb-1">// 获取方向类型</div>
+                            <div>const type = screen.orientation.type;</div>
+                            <div class="text-gray-400 mt-2 mb-1">// 获取角度</div>
+                            <div>const angle = screen.orientation.angle;</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-blue-300 mb-2">👂 监听方向变化</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div>screen.orientation.addEventListener('change', () => {</div>
+                            <div class="ml-4">console.log('方向已改变:', screen.orientation.type);</div>
+                            <div>});</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-blue-400">
+                        <h5 class="text-blue-300 font-medium mb-1">📋 支持的方向值</h5>
+                        <ul class="text-sm text-gray-300 space-y-1">
+                            <li>• <code class="text-yellow-300">portrait-primary</code> - 主竖屏</li>
+                            <li>• <code class="text-yellow-300">portrait-secondary</code> - 倒置竖屏</li>
+                            <li>• <code class="text-yellow-300">landscape-primary</code> - 主横屏</li>
+                            <li>• <code class="text-yellow-300">landscape-secondary</code> - 倒置横屏</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen Wake Lock API 用法 -->
+            <div class="glass-effect rounded-2xl p-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-lightbulb text-2xl text-yellow-400 mr-3"></i>
+                    <h3 class="text-xl font-semibold text-white">Screen Wake Lock API</h3>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-lg font-medium text-green-300 mb-2">🔋 获取屏幕唤醒锁</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div class="text-gray-400 mb-1">// 请求屏幕常亮</div>
+                            <div>const wakeLock = await navigator.wakeLock.request('screen');</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-green-300 mb-2">🔓 释放唤醒锁</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400">
+                            <div>wakeLock.release();</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-green-300 mb-2">👂 监听释放事件</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div>wakeLock.addEventListener('release', () => {</div>
+                            <div class="ml-4">console.log('屏幕唤醒锁已释放');</div>
+                            <div>});</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-green-300 mb-2">🔍 检查API支持</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div>if ('wakeLock' in navigator) {</div>
+                            <div class="ml-4">// 支持 Wake Lock API</div>
+                            <div class="ml-4">console.log('支持屏幕常亮功能');</div>
+                            <div>}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-green-300 mb-2">🔄 完整示例</h4>
+                        <div class="bg-gray-900 rounded-lg p-3 text-sm font-mono text-green-400 overflow-x-auto">
+                            <div>let wakeLock = null;</div>
+                            <div class="mt-1">try {</div>
+                            <div class="ml-4">wakeLock = await navigator.wakeLock.request('screen');</div>
+                            <div class="ml-4">console.log('屏幕常亮已启用');</div>
+                            <div>} catch (err) {</div>
+                            <div class="ml-4">console.error('启用失败:', err.message);</div>
+                            <div>}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-900 bg-opacity-30 rounded-lg p-3 border-l-4 border-yellow-400">
+                        <h5 class="text-yellow-300 font-medium mb-1">⚠️ 重要提示</h5>
+                        <ul class="text-sm text-gray-300 space-y-1">
+                            <li>• 需要在安全上下文(HTTPS)中使用</li>
+                            <li>• 页面不可见时会自动释放</li>
+                            <li>• 需要用户激活状态才能获取</li>
+                            <li>• 移动设备支持更好</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用场景和最佳实践 -->
+        <div class="mt-8 glass-effect rounded-2xl p-6">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-star text-2xl text-orange-400 mr-3"></i>
+                <h3 class="text-xl font-semibold text-white">使用场景与最佳实践</h3>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-lg font-medium text-purple-300 mb-3">🎯 Screen Orientation API 使用场景</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fas fa-gamepad text-green-400 mr-2 mt-1"></i>
+                            <span><strong>游戏应用:</strong> 锁定横屏获得更好的游戏体验</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-video text-blue-400 mr-2 mt-1"></i>
+                            <span><strong>视频播放:</strong> 全屏视频时锁定横屏</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-camera text-purple-400 mr-2 mt-1"></i>
+                            <span><strong>相机应用:</strong> 拍照时锁定特定方向</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-chart-line text-yellow-400 mr-2 mt-1"></i>
+                            <span><strong>数据展示:</strong> 图表展示时锁定最佳方向</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-medium text-green-300 mb-3">💡 Screen Wake Lock API 使用场景</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fas fa-book-reader text-blue-400 mr-2 mt-1"></i>
+                            <span><strong>阅读应用:</strong> 长时间阅读时保持屏幕常亮</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-route text-green-400 mr-2 mt-1"></i>
+                            <span><strong>导航应用:</strong> 导航过程中防止屏幕休眠</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-dumbbell text-purple-400 mr-2 mt-1"></i>
+                            <span><strong>健身应用:</strong> 运动计时时保持屏幕可见</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-presentation text-orange-400 mr-2 mt-1"></i>
+                            <span><strong>演示应用:</strong> 展示内容时防止屏幕关闭</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-indigo-900 bg-opacity-30 rounded-lg p-4 border-l-4 border-indigo-400">
+                <h5 class="text-indigo-300 font-medium mb-2">🏆 开发最佳实践</h5>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                    <div>
+                        <h6 class="text-white font-medium mb-1">Screen Orientation API:</h6>
+                        <ul class="space-y-1">
+                            <li>• 在用户交互后立即调用</li>
+                            <li>• 优先尝试进入全屏模式</li>
+                            <li>• 提供降级方案和错误处理</li>
+                            <li>• 适时解锁方向恢复用户控制</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 class="text-white font-medium mb-1">Screen Wake Lock API:</h6>
+                        <ul class="space-y-1">
+                            <li>• 页面不可见时自动释放</li>
+                            <li>• 监听释放事件进行状态更新</li>
+                            <li>• 提供用户手动控制选项</li>
+                            <li>• 考虑电池消耗影响</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
