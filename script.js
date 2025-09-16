@@ -18,7 +18,53 @@ class ScreenController {
         this.bindEvents();
         this.updateOrientationStatus();
         this.startOrientationMonitoring();
+        this.checkMobileOptimizations();
         this.log('系统初始化完成');
+    }
+
+    // 检查移动设备优化
+    checkMobileOptimizations() {
+        if (!this.isDesktopEnvironment()) {
+            this.log('🔧 移动设备检测到，应用移动优化...', 'info');
+            
+            // 添加移动设备特定的提示
+            this.log('💡 移动设备提示：', 'info');
+            this.log('1. 确保允许浏览器全屏访问', 'info');
+            this.log('2. 某些浏览器需要用户手势才能锁定方向', 'info');
+            this.log('3. 建议在Chrome或Safari中测试', 'info');
+            
+            // 检查是否在WebView中
+            if (this.isInWebView()) {
+                this.log('⚠️ 检测到WebView环境，功能可能受限', 'warning');
+            }
+            
+            // 检查浏览器类型
+            this.checkMobileBrowserSupport();
+        }
+    }
+
+    // 检查是否在WebView中
+    isInWebView() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        return userAgent.includes('wv') || 
+               userAgent.includes('webview') ||
+               (userAgent.includes('android') && !userAgent.includes('chrome')) ||
+               window.navigator.standalone === true;
+    }
+
+    // 检查移动浏览器支持情况
+    checkMobileBrowserSupport() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        if (userAgent.includes('chrome')) {
+            this.log('✅ Chrome浏览器，方向锁定支持良好', 'success');
+        } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+            this.log('⚠️ Safari浏览器，方向锁定支持有限', 'warning');
+        } else if (userAgent.includes('firefox')) {
+            this.log('⚠️ Firefox浏览器，方向锁定支持有限', 'warning');
+        } else {
+            this.log('❓ 未知浏览器，方向锁定支持情况不明', 'warning');
+        }
     }
 
     // 检查浏览器兼容性
@@ -109,7 +155,29 @@ class ScreenController {
     // 检查是否为桌面环境
     isDesktopEnvironment() {
         const userAgent = navigator.userAgent.toLowerCase();
-        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+        
+        // 更全面的移动设备检测
+        const mobileKeywords = [
+            'android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 
+            'iemobile', 'opera mini', 'mobile', 'tablet', 'kindle',
+            'silk', 'gt-', 'sm-', 'lg-', 'htc', 'nokia', 'samsung'
+        ];
+        
+        const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+        
+        // 检查触摸支持
+        const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // 检查屏幕尺寸（移动设备通常较小）
+        const isSmallScreen = window.screen.width <= 768 || window.screen.height <= 768;
+        
+        // 检查设备方向API（移动设备通常支持）
+        const hasOrientationAPI = 'orientation' in window || 'onorientationchange' in window;
+        
+        // 综合判断
+        const isMobile = isMobileUA || (hasTouchSupport && isSmallScreen) || 
+                        (hasTouchSupport && hasOrientationAPI && isSmallScreen);
+        
         return !isMobile;
     }
 
@@ -139,10 +207,19 @@ class ScreenController {
 
     // 绑定事件监听器
     bindEvents() {
-        // 屏幕方向控制按钮
-        document.getElementById('portraitBtn').addEventListener('click', () => this.handleOrientationLock('portrait-primary'));
-        document.getElementById('landscapeBtn').addEventListener('click', () => this.handleOrientationLock('landscape-primary'));
-        document.getElementById('unlockOrientationBtn').addEventListener('click', () => this.handleOrientationUnlock());
+        // 屏幕方向控制按钮 - 使用立即执行确保用户激活状态
+        document.getElementById('portraitBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleOrientationLockWithUserGesture('portrait-primary');
+        });
+        document.getElementById('landscapeBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleOrientationLockWithUserGesture('landscape-primary');
+        });
+        document.getElementById('unlockOrientationBtn').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleOrientationUnlock();
+        });
         
         // 添加模拟模式切换按钮（如果存在）
         const simulationToggle = document.getElementById('simulationToggle');
@@ -169,6 +246,15 @@ class ScreenController {
         window.addEventListener('beforeunload', () => this.cleanup());
     }
 
+    // 处理带用户手势的屏幕方向锁定
+    async handleOrientationLockWithUserGesture(orientation) {
+        // 确保在用户交互的上下文中立即执行
+        this.log(`用户请求锁定屏幕方向: ${orientation}`, 'info');
+        
+        // 立即尝试锁定，不延迟
+        await this.handleOrientationLock(orientation);
+    }
+
     // 处理屏幕方向锁定
     async handleOrientationLock(orientation) {
         // 预检查
@@ -182,12 +268,19 @@ class ScreenController {
         try {
             this.log(`尝试锁定屏幕方向: ${orientation}`);
             
-            // 尝试进入全屏模式（某些浏览器需要）
-            if (this.isDesktopEnvironment() && !document.fullscreenElement) {
-                this.log('桌面环境检测到，尝试进入全屏模式...', 'info');
-                await this.requestFullscreen();
+            // 移动设备优先尝试全屏模式
+            if (!document.fullscreenElement) {
+                this.log('尝试进入全屏模式以支持方向锁定...', 'info');
+                try {
+                    await this.requestFullscreen();
+                    // 等待全屏模式稳定
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                } catch (fullscreenError) {
+                    this.log('全屏模式请求失败，尝试直接锁定方向', 'warning');
+                }
             }
             
+            // 尝试锁定屏幕方向
             await screen.orientation.lock(orientation);
             this.log(`屏幕方向已锁定: ${orientation}`, 'success');
             this.addRotateAnimation();
@@ -213,12 +306,20 @@ class ScreenController {
             };
         }
 
-        // 检查安全上下文
-        if (!window.isSecureContext) {
+        // 对移动设备放宽安全上下文检查
+        const isMobile = !this.isDesktopEnvironment();
+        const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        
+        if (!isSecure && !isMobile) {
             return {
                 canProceed: false,
                 message: '屏幕方向锁定需要安全上下文 (HTTPS或localhost)'
             };
+        }
+
+        // 移动设备即使在非安全上下文也尝试执行
+        if (!isSecure && isMobile) {
+            this.log('⚠️ 非安全上下文，但在移动设备上尝试执行', 'warning');
         }
 
         return { canProceed: true };
@@ -230,19 +331,35 @@ class ScreenController {
         
         if (errorMessage.includes('not available on this device')) {
             this.log('❌ 当前设备不支持屏幕方向锁定', 'error');
-            this.log('💡 这通常发生在桌面浏览器中，请在移动设备上测试', 'info');
-        } else if (errorMessage.includes('fullscreen')) {
+            if (this.isDesktopEnvironment()) {
+                this.log('💡 这通常发生在桌面浏览器中，请在移动设备上测试', 'info');
+            } else {
+                this.log('💡 某些移动浏览器可能限制了此功能', 'info');
+            }
+        } else if (errorMessage.includes('fullscreen') || errorMessage.includes('document not active')) {
             this.log('❌ 需要全屏模式才能锁定屏幕方向', 'error');
             this.log('💡 正在尝试进入全屏模式...', 'info');
             this.tryFullscreenLock(orientation);
-        } else if (errorMessage.includes('user activation')) {
+        } else if (errorMessage.includes('user activation') || errorMessage.includes('user gesture')) {
             this.log('❌ 需要用户交互才能锁定屏幕方向', 'error');
-            this.log('💡 请确保在用户点击后调用此功能', 'info');
-        } else if (errorMessage.includes('security')) {
+            this.log('💡 请确保在用户点击后立即调用此功能', 'info');
+        } else if (errorMessage.includes('security') || errorMessage.includes('secure context')) {
             this.log('❌ 安全限制：需要HTTPS环境', 'error');
             this.log('💡 请使用HTTPS或localhost进行测试', 'info');
+        } else if (errorMessage.includes('invalid') || errorMessage.includes('not supported')) {
+            this.log(`❌ 不支持的方向值: ${orientation}`, 'error');
+            this.log('💡 尝试使用标准方向值: portrait-primary 或 landscape-primary', 'info');
+        } else if (errorMessage.includes('aborted') || errorMessage.includes('interrupted')) {
+            this.log('❌ 方向锁定被中断', 'error');
+            this.log('💡 正在重试...', 'info');
+            // 延迟重试
+            setTimeout(() => {
+                this.retryOrientationLock(orientation);
+            }, 1000);
         } else {
             this.log(`屏幕方向锁定失败: ${error.message}`, 'error');
+            this.log('💡 正在尝试替代方案...', 'info');
+            this.tryAlternativeLockMethod(orientation);
         }
         
         console.error('Orientation lock error:', error);
@@ -270,13 +387,80 @@ class ScreenController {
     // 请求全屏模式
     async requestFullscreen() {
         const element = document.documentElement;
-        if (element.requestFullscreen) {
-            await element.requestFullscreen();
-        } else if (element.webkitRequestFullscreen) {
-            await element.webkitRequestFullscreen();
-        } else if (element.msRequestFullscreen) {
-            await element.msRequestFullscreen();
+        try {
+            if (element.requestFullscreen) {
+                await element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                await element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                await element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                await element.msRequestFullscreen();
+            } else {
+                throw new Error('Fullscreen API not supported');
+            }
+            this.log('已进入全屏模式', 'success');
+        } catch (error) {
+            this.log(`全屏模式请求失败: ${error.message}`, 'warning');
+            throw error;
         }
+    }
+
+    // 重试方向锁定
+    async retryOrientationLock(orientation) {
+        this.log(`重试锁定屏幕方向: ${orientation}`, 'info');
+        try {
+            await screen.orientation.lock(orientation);
+            this.log(`重试成功，屏幕方向已锁定: ${orientation}`, 'success');
+            this.addRotateAnimation();
+        } catch (error) {
+            this.log(`重试失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 尝试替代锁定方法
+    async tryAlternativeLockMethod(orientation) {
+        this.log('尝试替代方向锁定方法...', 'info');
+        
+        // 方法1: 先进入全屏再锁定
+        if (!document.fullscreenElement) {
+            try {
+                await this.requestFullscreen();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await screen.orientation.lock(orientation);
+                this.log(`替代方法成功，屏幕方向已锁定: ${orientation}`, 'success');
+                this.addRotateAnimation();
+                return;
+            } catch (error) {
+                this.log(`替代方法1失败: ${error.message}`, 'warning');
+            }
+        }
+
+        // 方法2: 使用不同的方向值
+        const alternativeOrientations = {
+            'portrait-primary': ['portrait', 'portrait-primary'],
+            'landscape-primary': ['landscape', 'landscape-primary'],
+            'portrait': ['portrait-primary', 'portrait'],
+            'landscape': ['landscape-primary', 'landscape']
+        };
+
+        const alternatives = alternativeOrientations[orientation] || [orientation];
+        
+        for (const altOrientation of alternatives) {
+            if (altOrientation !== orientation) {
+                try {
+                    this.log(`尝试替代方向值: ${altOrientation}`, 'info');
+                    await screen.orientation.lock(altOrientation);
+                    this.log(`替代方向值成功: ${altOrientation}`, 'success');
+                    this.addRotateAnimation();
+                    return;
+                } catch (error) {
+                    this.log(`替代方向值失败: ${altOrientation}`, 'warning');
+                }
+            }
+        }
+
+        this.log('所有替代方法均失败', 'error');
     }
 
     // 显示方向锁定建议
